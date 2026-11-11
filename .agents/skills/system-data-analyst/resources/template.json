@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DataAnalysisSummary",
+  "type": "object",
+  "properties": {
+    "dataset": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "totalRows": { "type": "integer" },
+        "totalColumns": { "type": "integer" },
+        "cleanlinessScore": { "type": "number", "minimum": 0, "maximum": 100 }
+      },
+      "required": ["name", "totalRows", "totalColumns", "cleanlinessScore"]
+    },
+    "keyMetrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "metric": { "type": "string" },
+          "value": { "type": ["string", "number"] },
+          "trend": { "type": "string", "enum": ["UPWARD", "DOWNWARD", "STABLE"] }
+        },
+        "required": ["metric", "value"]
+      }
+    },
+    "anomaliesDetected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "column": { "type": "string" },
+          "outlierCount": { "type": "integer" },
+          "recommendation": { "type": "string" }
+        },
+        "required": ["column", "outlierCount", "recommendation"]
+      }
+    }
+  },
+  "required": ["dataset", "keyMetrics", "anomaliesDetected"]
+}
+

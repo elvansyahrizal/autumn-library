@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CodeReviewReport",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "reviewer": { "type": "string", "default": "Antigravity Code Reviewer" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "branchOrCommit": { "type": "string" },
+        "overallVerdict": { "type": "string", "enum": ["APPROVED", "CHANGES_REQUESTED", "BLOCKED"] }
+      },
+      "required": ["reviewer", "timestamp", "overallVerdict"]
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "criticalCount": { "type": "integer", "minimum": 0 },
+        "warningCount": { "type": "integer", "minimum": 0 },
+        "suggestionCount": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["criticalCount", "warningCount", "suggestionCount"]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "severity": { "type": "string", "enum": ["CRITICAL", "WARNING", "SUGGESTION"] },
+          "file": { "type": "string" },
+          "lineRange": { "type": "string" },
+          "issueDescription": { "type": "string" },
+          "remediationSuggestion": { "type": "string" }
+        },
+        "required": ["id", "severity", "file", "issueDescription", "remediationSuggestion"]
+      }
+    }
+  },
+  "required": ["metadata", "summary", "findings"]
+}
+
