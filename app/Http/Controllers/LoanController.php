@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use App\Models\Loan;
 use App\Models\Member;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -23,15 +22,23 @@ class LoanController extends Controller
         $body = ['data' => [], 'meta' => null];
 
         try {
-            $response = Http::get(config('services.internal_api.base_url').'/api/loans', [
-                'page' => $request->query('page', 1),
-            ]);
+            $apiUrl = config('services.internal_api.base_url');
+            if ($apiUrl) {
+                $response = Http::timeout(1)->get($apiUrl.'/api/loans', [
+                    'page' => $request->query('page', 1),
+                ]);
 
-            if ($response->successful()) {
-                $body = $response->json();
+                if ($response->successful()) {
+                    $body = $response->json();
+                } else {
+                    $body = (new Api\LoanController)->index()->response()->getData(true);
+                }
+            } else {
+                $body = (new Api\LoanController)->index()->response()->getData(true);
             }
-        } catch (ConnectionException $e) {
-            // Server internal API (port 8011) tidak bisa dihubungi - tabel laporan tampil kosong.
+        } catch (\Exception $e) {
+            // Fallback memanggil controller API internal agar laporan selalu terisi data riil
+            $body = (new Api\LoanController)->index()->response()->getData(true);
         }
 
         return view('loans.report', [

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Member;
 use App\Http\Requests\StoreMemberRequest;
+use App\Models\Member;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class MemberController extends Controller
 {
@@ -25,10 +27,21 @@ class MemberController extends Controller
     public function store(StoreMemberRequest $request)
     {
         $validated = $request->validated();
+
+        $user = User::firstOrCreate(
+            ['email' => $validated['email']],
+            [
+                'name' => $validated['nama'],
+                'password' => Hash::make($validated['nim']),
+                'role' => 'anggota',
+            ]
+        );
+
+        $validated['user_id'] = $user->id;
         Member::create($validated);
 
         return redirect()->route('members.index')
-            ->with('success', "Anggota \"{$validated['nama']}\" berhasil ditambahkan.");
+            ->with('success', "Anggota \"{$validated['nama']}\" berhasil ditambahkan (Akun login dibuat dengan password default NIM).");
     }
 
     public function show(string $id)
@@ -41,6 +54,7 @@ class MemberController extends Controller
     public function edit(string $id)
     {
         $member = Member::findOrFail($id);
+
         return view('members.edit', compact('member'));
     }
 
@@ -50,8 +64,8 @@ class MemberController extends Controller
 
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
-            'nim' => 'required|string|max:20|unique:members,nim,' . $id,
-            'email' => 'required|email|max:100|unique:members,email,' . $id,
+            'nim' => 'required|string|max:20|unique:members,nim,'.$id,
+            'email' => 'required|email|max:100|unique:members,email,'.$id,
             'nomor_telepon' => 'required|string|max:15',
             'alamat' => 'required|string',
             'status' => 'required|in:aktif,nonaktif',

@@ -21,9 +21,10 @@ class LoanResource extends JsonResource
                 'nama' => $this->member?->nama,
             ],
             'petugas' => [
-                'id' => $this->user?->id,
-                'name' => $this->user?->name,
+                'id' => $this->approved_by ?? $this->user?->id,
+                'name' => $this->approver?->name ?? $this->user?->name ?? 'Mandiri (Menunggu Petugas)',
             ],
+            'denda' => $this->denda ?? 0,
             'tanggal_pinjam' => $this->tanggal_pinjam,
             'tanggal_kembali' => $this->tanggal_kembali,
             'tanggal_dikembalikan' => $this->tanggal_dikembalikan,

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -34,6 +35,27 @@ class UserSeeder extends Seeder
                 'name' => 'Ahmad Fauzi',
                 'password' => Hash::make('password'),
                 'role' => 'petugas',
+            ]
+        );
+
+        $studentUser = User::updateOrCreate(
+            ['email' => 'mahasiswa@pens.ac.id'],
+            [
+                'name' => 'Budi Mahasiswa PENS',
+                'password' => Hash::make('password'),
+                'role' => 'anggota',
+            ]
+        );
+
+        Member::updateOrCreate(
+            ['nim' => '3123500001'],
+            [
+                'user_id' => $studentUser->id,
+                'nama' => 'Budi Mahasiswa PENS',
+                'email' => 'mahasiswa@pens.ac.id',
+                'nomor_telepon' => '081234567890',
+                'alamat' => 'Kampus PENS Sukolilo, Surabaya',
+                'status' => 'aktif',
             ]
         );
     }

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Client\ConnectionException;
+use App\Http\Controllers\Api\StatsController as ApiStatsController;
 use Illuminate\Support\Facades\Http;
 
 class DashboardController extends Controller
@@ -16,16 +16,22 @@ class DashboardController extends Controller
         ];
 
         try {
-            $response = Http::get(config('services.internal_api.base_url').'/api/stats');
-
-            if ($response->successful()) {
-                $stats = $response->json();
+            $apiUrl = config('services.internal_api.base_url');
+            if ($apiUrl) {
+                $response = Http::timeout(1)->get($apiUrl.'/api/stats');
+                if ($response->successful()) {
+                    $stats = $response->json();
+                } else {
+                    $stats = (new ApiStatsController)->index()->getData(true);
+                }
+            } else {
+                $stats = (new ApiStatsController)->index()->getData(true);
             }
-        } catch (ConnectionException $e) {
-            // Server internal API (port 8011) tidak bisa dihubungi - statistik tetap tampil nol.
+        } catch (\Exception $e) {
+            // Fallback langsung ke API controller internal / database agar dashboard selalu menyajikan data riil
+            $stats = (new ApiStatsController)->index()->getData(true);
         }
 
         return view('dashboard', compact('stats'));
     }
 }
-
