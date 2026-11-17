@@ -52,13 +52,8 @@
     <div class="space-y-4">
         @forelse ($loans as $loan)
             @php
-                $isLate = false;
-                $estimatedFine = 0;
-                if ($loan->status === 'dipinjam' && now()->startOfDay()->gt($loan->tanggal_kembali->startOfDay())) {
-                    $isLate = true;
-                    $lateDays = now()->startOfDay()->diffInDays($loan->tanggal_kembali->startOfDay());
-                    $estimatedFine = $lateDays * 5000;
-                }
+                $estimatedFine = $loan->isApproved() ? $loan->estimatedFine() : 0;
+                $isLate = $estimatedFine > 0;
             @endphp
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 hover:border-blue-200 transition">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">

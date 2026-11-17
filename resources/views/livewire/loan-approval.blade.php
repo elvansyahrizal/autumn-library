@@ -82,13 +82,8 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($loans as $loan)
                         @php
-                            $isLate = false;
-                            $estimatedFine = 0;
-                            if ($loan->status === 'dipinjam' && now()->startOfDay()->gt($loan->tanggal_kembali->startOfDay())) {
-                                $isLate = true;
-                                $lateDays = now()->startOfDay()->diffInDays($loan->tanggal_kembali->startOfDay());
-                                $estimatedFine = $lateDays * 5000;
-                            }
+                            $estimatedFine = $loan->isApproved() ? $loan->estimatedFine() : 0;
+                            $isLate = $estimatedFine > 0;
                         @endphp
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="px-4 py-3 font-mono font-bold text-xs text-blue-900">

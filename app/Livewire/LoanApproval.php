@@ -2,12 +2,17 @@
 
 namespace App\Livewire;
 
+use App\Exceptions\LoanRuleException;
 use App\Models\Loan;
+use App\Services\LoanService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
+#[Title('Persetujuan & Pengembalian Sirkulasi')]
 class LoanApproval extends Component
 {
     use WithPagination;
@@ -21,6 +26,15 @@ class LoanApproval extends Component
     public string $errorMessage = '';
 
     protected $paginationTheme = 'tailwind';
+
+    public function mount(): void
+    {
+        abort_unless(
+            Auth::user()?->isAdmin() || Auth::user()?->isPetugas(),
+            403,
+            'Halaman ini hanya untuk petugas perpustakaan.'
+        );
+    }
 
     public function updatingFilterStatus(): void
     {
@@ -52,18 +66,14 @@ class LoanApproval extends Component
         }
 
         try {
-            DB::transaction(function () use ($loan, $user) {
-                $loan->update([
-                    'status' => 'dipinjam',
-                    'user_id' => $user->id,
-                    'approved_by' => $user->id,
-                    'approved_at' => now(),
-                ]);
-            });
+            app(LoanService::class)->approve($loan, $user);
 
             $this->successMessage = "Peminjaman #PINJAM-{$loan->id} berhasil disetujui dan buku siap diserahkan kepada anggota.";
-        } catch (\Exception $e) {
-            $this->errorMessage = 'Gagal menyetujui: '.$e->getMessage();
+        } catch (LoanRuleException $e) {
+            $this->errorMessage = $e->getMessage();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->errorMessage = 'Terjadi kesalahan saat menyetujui peminjaman.';
         }
     }
 
@@ -87,22 +97,14 @@ class LoanApproval extends Component
         }
 
         try {
-            DB::transaction(function () use ($loan) {
-                // Kembalikan stok buku
-                foreach ($loan->loanItems as $item) {
-                    if ($item->book) {
-                        $item->book->increment('stok');
-                    }
-                }
-
-                $loan->update([
-                    'status' => 'ditolak',
-                ]);
-            });
+            app(LoanService::class)->reject($loan);
 
             $this->successMessage = "Pengajuan peminjaman #PINJAM-{$loan->id} telah ditolak dan stok buku dikembalikan.";
-        } catch (\Exception $e) {
-            $this->errorMessage = 'Gagal menolak: '.$e->getMessage();
+        } catch (LoanRuleException $e) {
+            $this->errorMessage = $e->getMessage();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->errorMessage = 'Terjadi kesalahan saat menolak pengajuan.';
         }
     }
 
@@ -126,33 +128,14 @@ class LoanApproval extends Component
         }
 
         try {
-            DB::transaction(function () use ($loan) {
-                $now = now();
-                $dendaTotal = 0;
-
-                // Hitung denda jika telat (Rp 5.000 / hari)
-                if ($now->startOfDay()->gt($loan->tanggal_kembali->startOfDay())) {
-                    $lateDays = abs((int) $now->startOfDay()->diffInDays($loan->tanggal_kembali->startOfDay(), false));
-                    $dendaTotal = $lateDays * 5000;
-                }
-
-                // Kembalikan stok buku
-                foreach ($loan->loanItems as $item) {
-                    if ($item->book) {
-                        $item->book->increment('stok');
-                    }
-                }
-
-                $loan->update([
-                    'status' => 'dikembalikan',
-                    'tanggal_dikembalikan' => $now->toDateString(),
-                    'denda' => $dendaTotal,
-                ]);
-            });
+            app(LoanService::class)->returnLoan($loan);
 
             $this->successMessage = "Buku pada nota #PINJAM-{$loan->id} berhasil dikembalikan dan stok buku telah pulih.";
-        } catch (\Exception $e) {
-            $this->errorMessage = 'Gagal memproses pengembalian: '.$e->getMessage();
+        } catch (LoanRuleException $e) {
+            $this->errorMessage = $e->getMessage();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->errorMessage = 'Terjadi kesalahan saat memproses pengembalian.';
         }
     }
 

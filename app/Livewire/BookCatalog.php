@@ -2,15 +2,18 @@
 
 namespace App\Livewire;
 
+use App\Exceptions\LoanRuleException;
 use App\Models\Book;
 use App\Models\Category;
-use App\Models\Loan;
-use App\Models\LoanItem;
+use App\Services\LoanService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
+#[Title('Katalog Buku')]
 class BookCatalog extends Component
 {
     use WithPagination;
@@ -99,68 +102,23 @@ class BookCatalog extends Component
             return;
         }
 
-        // Aturan 1: Maksimal 3 buku aktif (diajukan / dipinjam)
-        $activeLoansCount = Loan::where('member_id', $member->id)
-            ->whereIn('status', ['diajukan', 'dipinjam'])
-            ->count();
-
-        if ($activeLoansCount >= 3) {
-            $this->errorMessage = 'Gagal: Anda telah mencapai batas maksimal peminjaman aktif (3 buku). Selesaikan pinjaman sebelumnya terlebih dahulu.';
-            $this->closeModal();
-
-            return;
-        }
-
-        // Aturan 2: Tidak boleh meminjam judul buku yang sama jika belum dikembalikan
-        $alreadyBorrowed = Loan::where('member_id', $member->id)
-            ->whereIn('status', ['diajukan', 'dipinjam'])
-            ->whereHas('loanItems', function ($q) {
-                $q->where('book_id', $this->selectedBook->id);
-            })
-            ->exists();
-
-        if ($alreadyBorrowed) {
-            $this->errorMessage = "Gagal: Anda sedang meminjam atau mengajukan buku \"{$this->selectedBook->judul}\".";
-            $this->closeModal();
-
-            return;
-        }
-
         try {
-            DB::transaction(function () use ($member) {
-                // Lock buku untuk pencegahan race condition
-                $book = Book::where('id', $this->selectedBook->id)->lockForUpdate()->firstOrFail();
-
-                if ($book->stok < 1) {
-                    throw new \Exception('Maaf, stok buku baru saja habis.');
-                }
-
-                // 1. Kurangi stok buku
-                $book->decrement('stok');
-
-                // 2. Buat record Loan dengan status 'diajukan'
-                $loan = Loan::create([
-                    'member_id' => $member->id,
-                    'user_id' => null, // Belum ada approval petugas
-                    'tanggal_pinjam' => now()->toDateString(),
-                    'tanggal_kembali' => now()->addDays($this->durasiHari)->toDateString(),
-                    'status' => 'diajukan',
-                    'denda' => 0,
-                ]);
-
-                // 3. Buat record LoanItem
-                LoanItem::create([
-                    'loan_id' => $loan->id,
-                    'book_id' => $book->id,
-                ]);
-            });
-
-            $this->successMessage = "Pengajuan pinjam buku \"{$this->selectedBook->judul}\" berhasil! Silakan temui petugas perpustakaan untuk verifikasi dan pengambilan fisik buku.";
-            $this->closeModal();
-        } catch (\Exception $e) {
+            app(LoanService::class)->submit($member, $this->selectedBook, $this->durasiHari);
+        } catch (LoanRuleException $e) {
             $this->errorMessage = $e->getMessage();
             $this->closeModal();
+
+            return;
+        } catch (\Throwable $e) {
+            report($e);
+            $this->errorMessage = 'Terjadi kesalahan saat memproses pengajuan. Silakan coba lagi.';
+            $this->closeModal();
+
+            return;
         }
+
+        $this->successMessage = "Pengajuan pinjam buku \"{$this->selectedBook->judul}\" berhasil! Silakan temui petugas perpustakaan untuk verifikasi dan pengambilan fisik buku.";
+        $this->closeModal();
     }
 
     public function resetMessages(): void

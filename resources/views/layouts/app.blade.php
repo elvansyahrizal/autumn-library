@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Perpustakaan Digital Kampus')</title>
+    <title>@hasSection('title')@yield('title')@else{{ $title ?? 'Perpustakaan Digital Kampus' }}@endif</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     <style>
@@ -22,6 +22,7 @@
         main { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
         table { border-collapse: collapse; width: 100%; margin-top: 16px; }
         .alert-success { background: #d1fae5; color: #065f46; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; }
+        .alert-error { background: #fee2e2; color: #991b1b; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; }
         .stats-grid { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
         .stat-card { flex: 1; min-width: 160px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; text-align: center; }
         .stat-card .value { font-size: 32px; font-weight: bold; color: #1e3a8a; }
@@ -32,9 +33,10 @@
         .pagination .pagination-current { font-weight: bold; color: #1e3a8a; }
         .pagination .pagination-disabled { color: #9ca3af; }
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-diajukan { background: #e0e7ff; color: #3730a3; }
         .badge-dipinjam { background: #fef3c7; color: #92400e; }
         .badge-dikembalikan { background: #d1fae5; color: #065f46; }
-        .badge-terlambat { background: #fee2e2; color: #991b1b; }
+        .badge-ditolak { background: #e5e7eb; color: #374151; }
         .btn { display: inline-block; padding: 6px 14px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
         form.inline { display: inline; }
         footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; margin-top: 40px; }

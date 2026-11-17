@@ -2,12 +2,17 @@
 
 namespace App\Livewire;
 
+use App\Exceptions\LoanRuleException;
 use App\Models\Loan;
+use App\Services\LoanService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Layout('layouts.app')]
+#[Title('Pinjaman Saya')]
 class MyLoans extends Component
 {
     use WithPagination;
@@ -48,22 +53,14 @@ class MyLoans extends Component
         }
 
         try {
-            DB::transaction(function () use ($loan) {
-                // Kembalikan stok buku untuk setiap item
-                foreach ($loan->loanItems as $item) {
-                    if ($item->book) {
-                        $item->book->increment('stok');
-                    }
-                }
-
-                $loan->update([
-                    'status' => 'ditolak',
-                ]);
-            });
+            app(LoanService::class)->cancel($loan, $user->member);
 
             $this->successMessage = 'Pengajuan peminjaman berhasil dibatalkan dan stok buku telah dikembalikan.';
-        } catch (\Exception $e) {
-            $this->errorMessage = 'Gagal membatalkan: '.$e->getMessage();
+        } catch (LoanRuleException $e) {
+            $this->errorMessage = $e->getMessage();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->errorMessage = 'Terjadi kesalahan saat membatalkan pengajuan. Silakan coba lagi.';
         }
     }
 

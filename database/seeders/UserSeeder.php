@@ -38,11 +38,12 @@ class UserSeeder extends Seeder
             ]
         );
 
+        // Akun mahasiswa demo: password awal sama dengan NIM (3123500001).
         $studentUser = User::updateOrCreate(
             ['email' => 'mahasiswa@pens.ac.id'],
             [
                 'name' => 'Budi Mahasiswa PENS',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('3123500001'),
                 'role' => 'anggota',
             ]
         );

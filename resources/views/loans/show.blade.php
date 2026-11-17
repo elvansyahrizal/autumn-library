@@ -11,7 +11,6 @@
         .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-dipinjam { background: #fef3c7; color: #92400e; }
         .badge-dikembalikan { background: #d1fae5; color: #065f46; }
-        .badge-terlambat { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>

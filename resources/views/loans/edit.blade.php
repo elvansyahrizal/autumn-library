@@ -37,15 +37,9 @@
             <div class="error">{{ $message }}</div>
         @enderror
 
-        <label for="status">Status</label>
-        <select name="status" id="status">
-            <option value="dipinjam" @selected(old('status', $loan['status']) == 'dipinjam')>Dipinjam</option>
-            <option value="dikembalikan" @selected(old('status', $loan['status']) == 'dikembalikan')>Dikembalikan</option>
-            <option value="terlambat" @selected(old('status', $loan['status']) == 'terlambat')>Terlambat</option>
-        </select>
-        @error('status')
-            <div class="error">{{ $message }}</div>
-        @enderror
+        <p style="margin-top:12px; color:#6b7280; font-size:13px;">
+            Status transaksi hanya berubah melalui aksi setujui / tolak / kembalikan di halaman sirkulasi.
+        </p>
 
         <button type="submit" class="btn">Perbarui</button>
     </form>
