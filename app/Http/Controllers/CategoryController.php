@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use App\Http\Requests\StoreCategoryRequest;
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::paginate(10);
+        $categories = Category::when(request('search'), function ($query, $search) {
+            $query->where(function ($inner) use ($search) {
+                $inner->where('nama_kategori', 'like', "%{$search}%")
+                    ->orWhere('deskripsi', 'like', "%{$search}%");
+            });
+        })->paginate(10)->withQueryString();
+
         return view('categories.index', compact('categories'));
     }
 
@@ -31,6 +37,7 @@ class CategoryController extends Controller
     public function edit(string $id)
     {
         $category = Category::findOrFail($id);
+
         return view('categories.edit', compact('category'));
     }
 

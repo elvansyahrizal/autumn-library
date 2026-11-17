@@ -1,172 +1,217 @@
 <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Pinjaman Saya</h1>
-            <p class="text-sm text-gray-500 mt-1">
-                Pantau status pengajuan, jatuh tempo, serta histori pengembalian buku Anda.
-            </p>
-        </div>
-        <div>
-            <a href="{{ route('catalog.index') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition shadow-sm">
-                <span>➕</span> Pinjam Buku Baru
-            </a>
-        </div>
-    </div>
+    <x-ui.page-header
+        eyebrow="Sirkulasi anggota"
+        title="Pinjaman Saya"
+        description="Pantau status pengajuan, jatuh tempo, dan histori pengembalian buku Anda dalam satu catatan."
+    >
+        <x-slot:actions>
+            <x-ui.button :href="route('catalog.index')">
+                <x-ui.icon name="plus" :size="15" />
+                Pinjam buku baru
+            </x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <!-- Notifikasi -->
     @if ($successMessage)
-        <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-lg flex items-center justify-between">
-            <span class="text-sm font-medium">✅ {{ $successMessage }}</span>
-            <button wire:click="resetMessages" class="font-bold text-emerald-600">&times;</button>
-        </div>
+        <x-ui.alert tone="success" :message="$successMessage" dismiss="resetMessages" />
     @endif
 
     @if ($errorMessage)
-        <div class="bg-rose-50 border border-rose-300 text-rose-800 px-4 py-3 rounded-lg flex items-center justify-between">
-            <span class="text-sm font-medium">⚠️ {{ $errorMessage }}</span>
-            <button wire:click="resetMessages" class="font-bold text-rose-600">&times;</button>
-        </div>
+        <x-ui.alert tone="error" :message="$errorMessage" dismiss="resetMessages" />
     @endif
 
-    <!-- Filter Tab Status -->
-    <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
-        <button wire:click="$set('filterStatus', '')" class="px-3 py-1.5 rounded-lg text-xs font-semibold {{ $filterStatus === '' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-            Semua
-        </button>
-        <button wire:click="$set('filterStatus', 'diajukan')" class="px-3 py-1.5 rounded-lg text-xs font-semibold {{ $filterStatus === 'diajukan' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100' }}">
-            Menunggu Persetujuan
-        </button>
-        <button wire:click="$set('filterStatus', 'dipinjam')" class="px-3 py-1.5 rounded-lg text-xs font-semibold {{ $filterStatus === 'dipinjam' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100' }}">
-            Sedang Dipinjam
-        </button>
-        <button wire:click="$set('filterStatus', 'dikembalikan')" class="px-3 py-1.5 rounded-lg text-xs font-semibold {{ $filterStatus === 'dikembalikan' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
-            Selesai Dikembalikan
-        </button>
-        <button wire:click="$set('filterStatus', 'ditolak')" class="px-3 py-1.5 rounded-lg text-xs font-semibold {{ $filterStatus === 'ditolak' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100' }}">
-            Dibatalkan / Ditolak
-        </button>
+    <div class="flex flex-wrap gap-x-7 border-b border-line">
+        @foreach ([
+            '' => 'Semua',
+            'diajukan' => 'Menunggu',
+            'dipinjam' => 'Dipinjam',
+            'dikembalikan' => 'Selesai',
+            'ditolak' => 'Ditolak',
+        ] as $value => $label)
+            <button
+                type="button"
+                wire:click="$set('filterStatus', '{{ $value }}')"
+                class="tab-link"
+                aria-pressed="{{ $filterStatus === $value ? 'true' : 'false' }}"
+            >
+                {{ $label }}
+            </button>
+        @endforeach
     </div>
 
-    <!-- Daftar Kartu Transaksi Pinjaman -->
     <div class="space-y-4">
         @forelse ($loans as $loan)
             @php
                 $estimatedFine = $loan->isApproved() ? $loan->estimatedFine() : 0;
                 $isLate = $estimatedFine > 0;
+                $status = $loan->status;
             @endphp
-            <div wire:key="loan-{{ $loan->id }}" class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 hover:border-blue-200 transition">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
-                    <div class="flex items-center gap-3">
-                        <span class="text-sm font-bold text-gray-700">Kode Nota #PINJAM-{{ str_pad($loan->id, 5, '0', STR_PAD_LEFT) }}</span>
-                        <span class="text-xs text-gray-400">Tgl: {{ $loan->created_at->format('d M Y, H:i') }}</span>
+
+            <article
+                wire:key="loan-{{ $loan->id }}"
+                @class([
+                    'reveal overflow-hidden rounded-sm border border-line bg-card border-l-2',
+                    'border-l-brass' => $status === 'diajukan',
+                    'border-l-ink' => $status === 'dipinjam' && ! $isLate,
+                    'border-l-danger' => $isLate,
+                    'border-l-success' => $status === 'dikembalikan',
+                    'border-l-muted' => $status === 'ditolak',
+                ])
+                style="--d: {{ min($loop->index, 11) * 35 }}ms"
+            >
+                <div class="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                    <div class="min-w-0">
+                        <p class="num text-[12px] font-medium tracking-[0.02em] text-ink">
+                            #PINJAM-{{ str_pad($loan->id, 5, '0', STR_PAD_LEFT) }}
+                        </p>
+                        <p class="mt-1 font-mono text-[9.5px] uppercase tracking-[0.1em] text-muted">
+                            Diajukan {{ $loan->created_at->format('d M Y, H:i') }}
+                        </p>
                     </div>
 
-                    <div>
-                        @if ($loan->status === 'diajukan')
-                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                                ⏳ Menunggu Persetujuan Petugas
-                            </span>
-                        @elseif ($loan->status === 'dipinjam')
-                            @if ($isLate)
-                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 animate-pulse">
-                                    🚨 Terlambat (Denda: Rp {{ number_format($estimatedFine, 0, ',', '.') }})
-                                </span>
-                            @else
-                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                                    📖 Sedang Dipinjam
-                                </span>
-                            @endif
-                        @elseif ($loan->status === 'dikembalikan')
-                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                ✅ Sudah Dikembalikan
-                            </span>
-                        @elseif ($loan->status === 'ditolak')
-                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600 border border-gray-300">
-                                ❌ Dibatalkan / Ditolak
-                            </span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <x-ui.status-badge :status="$status" />
+
+                        @if ($isLate)
+                            <x-ui.badge tone="danger">Terlambat</x-ui.badge>
                         @endif
                     </div>
                 </div>
 
-                <!-- Buku yang Dipinjam -->
-                <div class="space-y-2">
+                <div class="divide-y divide-line/60 border-t border-line/60">
                     @foreach ($loan->loanItems as $item)
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">📘</span>
-                                <div>
-                                    <h4 class="font-bold text-sm text-gray-800">{{ $item->book->judul ?? 'Buku Dihapus' }}</h4>
-                                    <p class="text-xs text-gray-500">
-                                        {{ $item->book->penulis ?? '-' }} &bull; ISBN: {{ $item->book->isbn ?? '-' }}
-                                    </p>
-                                </div>
+                        <div class="flex items-center gap-4 px-5 py-3 sm:px-6">
+                            <x-book-cover
+                                :title="$item->book?->judul ?? 'Buku dihapus'"
+                                :author="$item->book?->penulis"
+                                :category="$item->book?->category?->nama_kategori"
+                                size="sm"
+                                class="w-[52px] shrink-0"
+                            />
+
+                            <div class="min-w-0 flex-1">
+                                <h3 class="truncate font-display text-[15.5px] font-medium leading-snug text-ink">
+                                    {{ $item->book?->judul ?? 'Buku dihapus' }}
+                                </h3>
+                                <p class="mt-0.5 truncate text-[11.5px] text-muted">
+                                    {{ $item->book?->penulis ?? '-' }}
+                                    <span class="mx-1.5 text-line">&bull;</span>
+                                    <span class="font-mono text-[9.5px]">ISBN {{ $item->book?->isbn ?: '-' }}</span>
+                                </p>
                             </div>
-                            <span class="text-xs font-semibold px-2 py-0.5 bg-gray-200 text-gray-700 rounded">
-                                {{ $item->book->category->nama_kategori ?? 'Umum' }}
+
+                            <span class="hidden shrink-0 sm:block">
+                                <x-ui.badge>{{ $item->book?->category?->nama_kategori ?? 'Umum' }}</x-ui.badge>
                             </span>
                         </div>
                     @endforeach
                 </div>
 
-                <!-- Timeline Tanggal -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs bg-gray-50/60 p-3 rounded-lg border border-gray-100">
-                    <div>
-                        <span class="text-gray-400 block">Tgl Pinjam</span>
-                        <span class="font-semibold text-gray-700">{{ $loan->tanggal_pinjam->format('d M Y') }}</span>
+                <dl class="grid grid-cols-2 gap-px border-t border-line bg-line sm:grid-cols-4">
+                    <div class="bg-card px-4 py-3">
+                        <dt class="font-mono text-[8.5px] font-medium uppercase tracking-[0.12em] text-muted">Tanggal pinjam</dt>
+                        <dd class="num mt-1 text-[12.5px] text-ink">{{ $loan->tanggal_pinjam->format('d M Y') }}</dd>
                     </div>
-                    <div>
-                        <span class="text-gray-400 block">Batas Kembali</span>
-                        <span class="font-semibold {{ $isLate ? 'text-rose-600 font-bold' : 'text-gray-700' }}">
+
+                    <div class="bg-card px-4 py-3">
+                        <dt class="font-mono text-[8.5px] font-medium uppercase tracking-[0.12em] text-muted">Batas kembali</dt>
+                        <dd @class(['num mt-1 text-[12.5px]', 'font-medium text-danger' => $isLate, 'text-ink' => ! $isLate])>
                             {{ $loan->tanggal_kembali->format('d M Y') }}
-                        </span>
+                        </dd>
                     </div>
-                    <div>
-                        <span class="text-gray-400 block">Tgl Dikembalikan</span>
-                        <span class="font-semibold text-gray-700">
-                            {{ $loan->tanggal_dikembalikan ? $loan->tanggal_dikembalikan->format('d M Y') : '-' }}
-                        </span>
+
+                    <div class="bg-card px-4 py-3">
+                        <dt class="font-mono text-[8.5px] font-medium uppercase tracking-[0.12em] text-muted">Dikembalikan</dt>
+                        <dd class="num mt-1 text-[12.5px] text-ink">
+                            {{ $loan->tanggal_dikembalikan ? $loan->tanggal_dikembalikan->format('d M Y') : '&ndash;' }}
+                        </dd>
                     </div>
-                    <div>
-                        <span class="text-gray-400 block">Total Denda</span>
-                        <span class="font-semibold {{ ($loan->denda > 0 || $estimatedFine > 0) ? 'text-rose-600 font-bold' : 'text-emerald-600' }}">
-                            @if ($loan->status === 'dikembalikan')
+
+                    <div class="bg-card px-4 py-3">
+                        <dt class="font-mono text-[8.5px] font-medium uppercase tracking-[0.12em] text-muted">Denda</dt>
+                        <dd @class(['num mt-1 text-[12.5px]', 'font-medium text-danger' => ($loan->denda > 0 || $isLate), 'text-success' => ($loan->denda === 0 && ! $isLate)])>
+                            @if ($status === 'dikembalikan')
                                 Rp {{ number_format($loan->denda, 0, ',', '.') }}
                             @elseif ($isLate)
-                                Rp {{ number_format($estimatedFine, 0, ',', '.') }} (estimasi)
+                                Rp {{ number_format($estimatedFine, 0, ',', '.') }} <span class="text-[9px] uppercase tracking-[0.08em] text-muted">estimasi</span>
                             @else
                                 Rp 0
                             @endif
-                        </span>
+                        </dd>
                     </div>
-                </div>
+                </dl>
 
-                <!-- Tombol Aksi Anggota -->
-                @if ($loan->status === 'diajukan')
-                    <div class="flex justify-end pt-1">
-                        <button 
-                            wire:click="batalkanPengajuan({{ $loan->id }})" 
-                            wire:confirm="Yakin ingin membatalkan pengajuan pinjaman buku ini?"
-                            class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-lg text-xs font-semibold transition cursor-pointer"
+                @if ($status === 'diajukan')
+                    <div x-data="{ confirm: false }">
+                        <div class="flex justify-end border-t border-line/60 px-5 py-3 sm:px-6">
+                            <x-ui.button type="button" variant="danger" size="sm" x-on:click="confirm = true">
+                                <x-ui.icon name="x" :size="13" />
+                                Batalkan pengajuan
+                            </x-ui.button>
+                        </div>
+
+                        <div
+                            x-show="confirm"
+                            x-cloak
+                            class="fixed inset-0 z-50 flex items-end justify-center bg-ink/55 p-3 backdrop-blur-[2px] sm:items-center sm:p-4"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="cancel-title-{{ $loan->id }}"
+                            x-on:keydown.escape.window="confirm = false"
+                            x-on:click.self="confirm = false"
                         >
-                            🚫 Batalkan Pengajuan
-                        </button>
+                            <div
+                                class="modal-panel w-full max-w-sm rounded-sm border border-line bg-card p-5 shadow-[0_28px_70px_-30px_rgba(20,33,61,0.55)]"
+                                tabindex="-1"
+                                data-focus-trap
+                                x-effect="if (confirm) $nextTick(() => $el.focus())"
+                            >
+                                <p class="eyebrow">Konfirmasi</p>
+                                <h2 id="cancel-title-{{ $loan->id }}" class="mt-2 font-display text-2xl font-medium text-ink">
+                                    Batalkan pengajuan?
+                                </h2>
+                                <p class="mt-2 text-[12.5px] leading-relaxed text-ink-soft">
+                                    Pengajuan <span class="num text-ink">#PINJAM-{{ str_pad($loan->id, 5, '0', STR_PAD_LEFT) }}</span> akan ditolak dan stok buku dikembalikan ke rak.
+                                </p>
+
+                                <div class="mt-5 flex gap-2">
+                                    <x-ui.button type="button" variant="secondary" class="flex-1" x-on:click="confirm = false">
+                                        Pertahankan
+                                    </x-ui.button>
+                                    <x-ui.button
+                                        type="button"
+                                        class="flex-1"
+                                        wire:click="batalkanPengajuan({{ $loan->id }})"
+                                        wire:loading.attr="disabled"
+                                        x-on:click="confirm = false"
+                                    >
+                                        Ya, batalkan
+                                    </x-ui.button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 @endif
-            </div>
+            </article>
         @empty
-            <div class="py-12 text-center text-gray-400 bg-white rounded-xl border border-gray-200">
-                <p class="text-4xl mb-2">📋</p>
-                <p class="font-medium">Belum ada riwayat peminjaman.</p>
-                <a href="{{ route('catalog.index') }}" class="mt-3 inline-block text-xs font-semibold text-blue-600 hover:underline">
-                    Buka Katalog Buku &rarr;
-                </a>
-            </div>
+            <x-ui.empty-state
+                icon="archive"
+                title="Belum ada riwayat peminjaman"
+                description="Mulai dari katalog untuk mengajukan buku pertama Anda. Pengajuan akan tampil di sini setelah dikirim."
+            >
+                <x-slot:action>
+                    <x-ui.button :href="route('catalog.index')" size="sm">
+                        Buka katalog buku
+                        <x-ui.icon name="arrow-right" :size="13" />
+                    </x-ui.button>
+                </x-slot:action>
+            </x-ui.empty-state>
         @endforelse
     </div>
 
-    <!-- Paginasi -->
-    <div class="mt-6">
-        {{ $loans->links() }}
-    </div>
+    @if ($loans->hasPages())
+        <div class="pt-2">
+            {{ $loans->links('vendor.pagination.livewire') }}
+        </div>
+    @endif
 </div>

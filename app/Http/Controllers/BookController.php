@@ -2,22 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBookRequest;
 use App\Models\Book;
 use App\Models\Category;
-use App\Http\Requests\StoreBookRequest;
 use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $books = Book::with('category')->paginate(10);
+        $books = Book::with('category')
+            ->when($request->query('search'), function ($query, $search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('judul', 'like', "%{$search}%")
+                        ->orWhere('penulis', 'like', "%{$search}%")
+                        ->orWhere('isbn', 'like', "%{$search}%");
+                });
+            })
+            ->paginate(10)
+            ->withQueryString();
+
         return view('books.index', compact('books'));
     }
 
     public function create()
     {
         $categories = Category::all();
+
         return view('books.create', compact('categories'));
     }
 
@@ -33,6 +44,7 @@ class BookController extends Controller
     public function show(string $id)
     {
         $book = Book::with('category')->findOrFail($id);
+
         return view('books.show', compact('book'));
     }
 
@@ -40,6 +52,7 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
         $categories = Category::all();
+
         return view('books.edit', compact('book', 'categories'));
     }
 

@@ -3,58 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@hasSection('title')@yield('title')@else{{ $title ?? 'Perpustakaan Digital Kampus' }}@endif</title>
+    <meta name="theme-color" content="#F6F1E6">
+    <meta name="description" content="Ruang Baca — perpustakaan digital Politeknik Elektronika Negeri Surabaya. Telusuri koleksi, ajukan peminjaman, dan pantau sirkulasi kampus.">
+    <title>@hasSection('title')@yield('title') — Ruang Baca @else{{ isset($title) ? $title.' — Ruang Baca' : 'Ruang Baca — Perpustakaan Digital PENS' }} @endif</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: 'Instrument Sans', sans-serif, system-ui; margin: 0; color: #1f2937; background-color: #f8fafc; }
-        nav { background: #1e3a8a; padding: 14px 40px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-        nav .brand { color: #fff; font-weight: bold; font-size: 18px; }
-        nav ul { list-style: none; display: flex; gap: 20px; margin: 0; padding: 0; }
-        nav ul li a { color: #cbd5e1; text-decoration: none; padding: 6px 4px; }
-        nav ul li a.active { color: #fff; font-weight: bold; border-bottom: 2px solid #fff; }
-        nav > a { color: #cbd5e1; text-decoration: none; padding: 6px 4px; }
-        nav > a.active { color: #fff; font-weight: bold; border-bottom: 2px solid #fff; }
-        nav .navbar-user { display: flex; align-items: center; gap: 12px; color: #cbd5e1; font-size: 14px; }
-        nav .btn-logout { background: none; border: 1px solid #cbd5e1; color: #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        nav .btn-logout:hover { background: #1e40af; color: #fff; }
-        main { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 16px; }
-        .alert-success { background: #d1fae5; color: #065f46; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; }
-        .alert-error { background: #fee2e2; color: #991b1b; padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; }
-        .stats-grid { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
-        .stat-card { flex: 1; min-width: 160px; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; text-align: center; }
-        .stat-card .value { font-size: 32px; font-weight: bold; color: #1e3a8a; }
-        .stat-card .label { margin-top: 6px; color: #6b7280; font-size: 14px; }
-        .pagination { margin-top: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .pagination a { color: #2563eb; text-decoration: none; }
-        .pagination a:hover { text-decoration: underline; }
-        .pagination .pagination-current { font-weight: bold; color: #1e3a8a; }
-        .pagination .pagination-disabled { color: #9ca3af; }
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .badge-diajukan { background: #e0e7ff; color: #3730a3; }
-        .badge-dipinjam { background: #fef3c7; color: #92400e; }
-        .badge-dikembalikan { background: #d1fae5; color: #065f46; }
-        .badge-ditolak { background: #e5e7eb; color: #374151; }
-        .btn { display: inline-block; padding: 6px 14px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
-        form.inline { display: inline; }
-        footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; margin-top: 40px; }
-    </style>
 </head>
 <body>
-    @include('partials.navbar')
+    <a href="#main" class="skip-link">Lewati ke konten</a>
 
-    <main>
-        @include('partials.alert')
-
-        @yield('content')
-        {{ $slot ?? '' }}
-    </main>
-
-    <footer>
-        &copy; {{ date('Y') }} Sistem Perpustakaan Digital Kampus &bull; Final Project UAS
-    </footer>
+    @include('partials.shell-select')
 
     @livewireScripts
 </body>

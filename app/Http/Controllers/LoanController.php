@@ -16,7 +16,19 @@ class LoanController extends Controller
 {
     public function index()
     {
-        $loans = Loan::with(['member', 'user', 'loanItems.book'])->paginate(10);
+        $loans = Loan::with(['member', 'user', 'loanItems.book'])
+            ->when(request('search'), function ($query, $search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('id', $search)
+                        ->orWhereHas('member', function ($member) use ($search) {
+                            $member->where('nama', 'like', "%{$search}%")
+                                ->orWhere('nim', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->latest('id')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('loans.index', compact('loans'));
     }

@@ -1,6 +1,6 @@
-# Skenario Demo Aplikasi Perpustakaan Digital Kampus
+# Skenario Demo Ruang Baca — Perpustakaan Digital PENS
 
-Panduan langkah demi langkah untuk demonstrasi UAS. Fokus utama: **alur mahasiswa (self-service)**, dilanjutkan panel petugas dan REST API.
+Panduan langkah demi langkah untuk demonstrasi UAS. Fokus utama: **alur mahasiswa (self-service)**, dilanjutkan panel petugas dan REST API. Seluruh antarmuka memakai brand **Ruang Baca** dengan shell publik/mahasiswa dan shell staf yang berbeda.
 
 ---
 
@@ -37,19 +37,20 @@ Data awal setelah seed: **20 buku**, **16 anggota** (semua punya akun), dan **10
 
 ### 2. Jelajahi katalog
 - Tunjukkan pencarian live (ketik judul/penulis/ISBN) dan filter kategori tanpa reload.
-- Perhatikan badge **Stok** pada setiap kartu buku.
+- Perhatikan badge **Stok** pada setiap kartu buku dan sampul tipografis yang konsisten.
+- Perkecil jendela: grid katalog menyesuaikan 4/3/2/1 kolom tanpa scroll horizontal.
 
 ### 3. Ajukan pinjam
-- Klik **📥 Pinjam Buku** pada salah satu buku (stok > 0).
-- Pada modal, pilih durasi (3/7/14 hari) lalu klik **Ajukan Pinjam**.
+- Klik **Pinjam buku** pada salah satu buku (stok > 0).
+- Pada modal, pilih durasi (3/7/14 hari) lalu klik **Ajukan pinjam**.
 - **Hasil**:
   - Muncul pesan sukses.
   - Badge stok buku berkurang 1 (stok dipotong saat pengajuan).
-  - Buka **Pinjaman Saya**, transaksi muncul dengan status **Menunggu Persetujuan Petugas**.
+  - Buka **Pinjaman Saya**, transaksi muncul dengan badge **Menunggu**.
 
 ### 4. Batalkan pengajuan (opsional)
-- Di **Pinjaman Saya**, klik **Batalkan Pengajuan**.
-- **Hasil**: status menjadi **Dibatalkan / Ditolak** dan stok buku kembali.
+- Di **Pinjaman Saya**, klik **Batalkan pengajuan**.
+- Konfirmasi pada modal, lalu **Hasil**: status menjadi **Ditolak** dan stok buku kembali.
 
 ### 5. Coba aturan bisnis
 - Ajukan 3 buku berbeda, lalu coba buku keempat → muncul pesan **batas maksimal 3 buku aktif**.
@@ -64,21 +65,21 @@ Data awal setelah seed: **20 buku**, **16 anggota** (semua punya akun), dan **10
 - **Hasil**: masuk ke **Dashboard**.
 
 ### 7. Setujui pengajuan
-- Buka menu **Persetujuan & Sirkulasi**.
+- Buka menu **Persetujuan**.
 - Pada tab **Diajukan**, klik **Setujui**.
 - **Hasil**: status berubah menjadi **Dipinjam**, petugas & waktu persetujuan tercatat.
 
 ### 8. Demonstrasi denda
 - Buka **Peminjaman** → **Edit** pada transaksi tersebut, ubah tanggal kembali menjadi **kemarin**, simpan.
-- Kembali ke **Persetujuan & Sirkulasi**, tab **Sedang Dipinjam**.
-- Tampilkan estimasi denda berjalan (Rp 5.000/hari), lalu klik **Proses Pengembalian**.
+- Kembali ke **Persetujuan**, tab **Dipinjam**.
+- Tampilkan estimasi denda berjalan (Rp 5.000/hari), lalu klik **Terima kembali**.
 - **Hasil**:
-  - Status **Selesai/Dikembalikan**.
+  - Status **Selesai**.
   - Denda final terhitung positif sesuai keterlambatan.
   - Stok buku kembali bertambah.
 
 ### 9. Transaksi manual petugas
-- Buka **Peminjaman** → **Tambah Peminjaman**.
+- Buka **Peminjaman** → **Input transaksi**.
 - Pilih anggota, tanggal, dan satu/lebih buku, lalu simpan.
 - **Hasil**: transaksi langsung berstatus **Dipinjam**, stok langsung berkurang, dan petugas pencatat terisi otomatis.
 
@@ -92,8 +93,8 @@ Data awal setelah seed: **20 buku**, **16 anggota** (semua punya akun), dan **10
 ## Alur 3 — Dashboard, Laporan, dan API
 
 ### 11. Dashboard & laporan
-- Kembali ke **Dashboard**: total buku, total anggota, dan peminjaman aktif.
-- Buka **Laporan**: data diambil dari `GET /api/loans`.
+- Kembali ke **Dashboard**: panel statistik Total Buku, Total Anggota, dan Peminjaman Aktif, dengan tabel peminjaman terbaru.
+- Buka **Laporan**: data diambil dari `GET /api/loans`, lalu tunjukkan tombol **Cetak laporan** dan pratinjau cetak.
 - Jelaskan fallback: matikan server `:8011`, lalu buka ulang dashboard/laporan → halaman tetap tampil memakai data lokal.
 
 ### 12. Demo REST API di Postman
@@ -123,7 +124,7 @@ Base URL: `http://127.0.0.1:8000/api`
 
 ### 13. Bukti otorisasi
 - Login sebagai mahasiswa, lalu akses `/books` atau `/persetujuan-sirkulasi`.
-- **Hasil**: halaman **403 Akses Ditolak** dengan navigasi kembali.
+- **Hasil**: halaman **403 Akses ditolak** dengan navigasi kembali.
 
 ---
 
@@ -133,4 +134,5 @@ Base URL: `http://127.0.0.1:8000/api`
 - Stok dan denda dihitung di satu service (`LoanService`) dengan transaksi database dan lock.
 - Denda selalu `max(0, hari terlambat) × Rp 5.000` (tidak pernah negatif).
 - RBAC tiga peran, API tulis dilindungi API key, dan aplikasi tetap berfungsi saat server API internal mati.
-- Total **33 test otomatis** lulus (`php artisan test`).
+- Aksesibilitas: skip link, focus ring, dialog dengan focus trap, dan tabel yang berubah menjadi slip di layar kecil.
+- Total **36 test otomatis** lulus (`php artisan test`).

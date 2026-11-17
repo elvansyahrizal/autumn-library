@@ -3,54 +3,90 @@
 @section('title', 'Profil Pengguna')
 
 @section('content')
-    <h1>Profil Pengguna</h1>
+    @php
+        $initial = strtoupper(mb_substr($user->name, 0, 1));
+    @endphp
 
-    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; max-width: 500px; margin-bottom: 30px;">
-        <h2 style="font-size: 18px; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Informasi Akun</h2>
-        <table style="width: 100%; border: none;">
-            <tr>
-                <td style="width: 120px; font-weight: bold; padding: 6px 0;">Nama</td>
-                <td style="padding: 6px 0;">: {{ $user->name }}</td>
-            </tr>
-            <tr>
-                <td style="font-weight: bold; padding: 6px 0;">Email</td>
-                <td style="padding: 6px 0;">: {{ $user->email }}</td>
-            </tr>
-            <tr>
-                <td style="font-weight: bold; padding: 6px 0;">Role</td>
-                <td style="padding: 6px 0;">: <span class="badge badge-dipinjam">{{ ucfirst($user->role) }}</span></td>
-            </tr>
-        </table>
-    </div>
+    <div class="space-y-6">
+        <x-ui.page-header
+            eyebrow="Akun"
+            title="Profil Pengguna"
+            description="Kelola identitas akun dan perbarui password untuk menjaga keamanan akses perpustakaan."
+        />
 
-    <div style="max-width: 500px;">
-        <h2>Ganti Password</h2>
-        <form action="{{ route('profile.password.update') }}" method="POST">
-            @csrf
-            @method('PUT')
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start">
+            <x-ui.panel>
+                <div class="flex items-center gap-4 border-b border-line pb-4">
+                    <span class="flex h-14 w-14 items-center justify-center rounded-sm bg-ink font-display text-2xl font-medium text-paper">{{ $initial }}</span>
+                    <div class="min-w-0">
+                        <h2 class="truncate font-display text-xl font-medium text-ink">{{ $user->name }}</h2>
+                        <p class="mt-1 truncate text-[12px] text-muted">{{ $user->email }}</p>
+                    </div>
+                </div>
 
-            <div style="margin-bottom: 12px;">
-                <label for="password_lama" style="display: block; font-weight: bold; margin-bottom: 4px;">Password Lama</label>
-                <input type="password" name="password_lama" id="password_lama" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px;" required>
-                @error('password_lama')
-                    <div style="color: #b91c1c; font-size: 14px; margin-top: 4px;">{{ $message }}</div>
-                @enderror
-            </div>
+                <p class="mt-4 font-mono text-[8.5px] font-medium uppercase tracking-[0.16em] text-brass-dark">Informasi akun</p>
 
-            <div style="margin-bottom: 12px;">
-                <label for="password_baru" style="display: block; font-weight: bold; margin-bottom: 4px;">Password Baru</label>
-                <input type="password" name="password_baru" id="password_baru" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px;" required>
-                @error('password_baru')
-                    <div style="color: #b91c1c; font-size: 14px; margin-top: 4px;">{{ $message }}</div>
-                @enderror
-            </div>
+                <dl class="def-list mt-2">
+                    <div class="def-row">
+                        <dt class="def-term">Nama</dt>
+                        <dd class="def-value">{{ $user->name }}</dd>
+                    </div>
+                    <div class="def-row">
+                        <dt class="def-term">Email</dt>
+                        <dd class="def-value">{{ $user->email }}</dd>
+                    </div>
+                    <div class="def-row">
+                        <dt class="def-term">Peran</dt>
+                        <dd class="def-value">
+                            <x-ui.badge tone="active">{{ ucfirst($user->role) }}</x-ui.badge>
+                        </dd>
+                    </div>
+                    <div class="def-row">
+                        <dt class="def-term">Status akun</dt>
+                        <dd class="def-value">
+                            <x-ui.badge tone="done">Aktif</x-ui.badge>
+                        </dd>
+                    </div>
+                </dl>
 
-            <div style="margin-bottom: 16px;">
-                <label for="password_baru_confirmation" style="display: block; font-weight: bold; margin-bottom: 4px;">Konfirmasi Password Baru</label>
-                <input type="password" name="password_baru_confirmation" id="password_baru_confirmation" style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 4px;" required>
-            </div>
+                <div class="mt-5 rounded-sm border-l-2 border-brass bg-brass-soft/25 px-4 py-3.5">
+                    <p class="text-[11.5px] leading-relaxed text-ink-soft">
+                        Peran akun menentukan menu yang tersedia. Hubungi administrator bila ada perubahan hak akses.
+                    </p>
+                </div>
+            </x-ui.panel>
 
-            <button type="submit" class="btn">Simpan Password Baru</button>
-        </form>
+            <x-ui.panel>
+                <div class="border-b border-line pb-4">
+                    <p class="font-mono text-[8.5px] font-medium uppercase tracking-[0.16em] text-brass-dark">Keamanan</p>
+                    <h2 class="mt-1 font-display text-xl font-medium text-ink">Ganti Password</h2>
+                    <p class="mt-1.5 text-[12px] leading-relaxed text-muted">Gunakan minimal 8 karakter dan kombinasikan huruf serta angka.</p>
+                </div>
+
+                <form action="{{ route('profile.password.update') }}" method="POST" class="mt-5 space-y-5">
+                    @csrf
+                    @method('PUT')
+
+                    <x-ui.field label="Password Lama" name="password_lama" required>
+                        <x-ui.input name="password_lama" type="password" autocomplete="current-password" placeholder="Password saat ini" />
+                    </x-ui.field>
+
+                    <x-ui.field label="Password Baru" name="password_baru" required hint="Minimal 8 karakter.">
+                        <x-ui.input name="password_baru" type="password" autocomplete="new-password" placeholder="Password baru" />
+                    </x-ui.field>
+
+                    <x-ui.field label="Konfirmasi Password Baru" name="password_baru_confirmation" required>
+                        <x-ui.input name="password_baru_confirmation" type="password" autocomplete="new-password" placeholder="Ulangi password baru" />
+                    </x-ui.field>
+
+                    <div class="flex justify-end border-t border-line pt-5">
+                        <x-ui.button type="submit">
+                            <x-ui.icon name="lock" :size="15" />
+                            Simpan password baru
+                        </x-ui.button>
+                    </div>
+                </form>
+            </x-ui.panel>
+        </div>
     </div>
 @endsection

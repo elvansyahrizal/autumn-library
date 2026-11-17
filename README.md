@@ -1,6 +1,8 @@
-# Sistem Perpustakaan Digital Kampus
+# Ruang Baca — Perpustakaan Digital PENS
 
 Aplikasi manajemen perpustakaan berbasis **Laravel 12 + Livewire 3 + Tailwind CSS (Vite)** dengan REST API internal. Mencakup alur peminjaman mandiri mahasiswa, persetujuan petugas, pengembalian buku, denda keterlambatan, serta laporan yang dikonsumsi dari API.
+
+Antarmuka memakai identitas **Ruang Baca** dengan bahasa visual editorial kampus: kertas, tinta, aksen kuningan, tipografi Newsreader/Instrument Sans/IBM Plex Mono, serta shell terpisah untuk publik/mahasiswa dan staf.
 
 ---
 
@@ -73,6 +75,17 @@ Perintah ini menjalankan server `:8000`, server `:8011`, dan Vite secara bersama
 
 ---
 
+## Antarmuka
+
+- **Shell publik/mahasiswa** — bilah atas tipis berisi katalog, pinjaman saya, profil, dan aksi keluar/masuk.
+- **Shell staf** — sidebar 248px untuk dashboard, sirkulasi, laporan, serta master data; top bar ringkas berisi konteks halaman dan akun.
+- **Token desain** — warna, tipografi, jarak, dan gerak didefinisikan di `resources/css/app.css` melalui `@theme` Tailwind v4.
+- **Komponen Blade** — tombol, badge status, panel, field, tabel editorial, slip seluler, dan sampul buku tipografis berada di `resources/views/components`.
+- **Aksesibilitas** — skip link, focus ring, label form, `aria-describedby`, dialog `role="dialog"` dengan focus trap, live region, serta dukungan `prefers-reduced-motion`.
+- **Responsif** — tabel berubah menjadi baris slip bertumpuk di bawah 768px; target sentuh minimal 40px.
+
+---
+
 ## Akun Demo
 
 | Peran | Email | Password |
@@ -90,14 +103,14 @@ Anggota lain yang dibuat seeder juga memiliki akun login dengan **password awal 
 
 | Halaman / Aksi | Admin | Petugas | Anggota |
 |---|---|---|---|
-| Katalog buku | ✅ | ✅ | ✅ |
-| Ajukan pinjam mandiri | — | — | ✅ |
-| Pinjaman Saya (batalkan pengajuan) | — | — | ✅ |
-| Persetujuan & pengembalian sirkulasi | ✅ | ✅ | ❌ |
-| CRUD buku & anggota | ✅ | ✅ | ❌ |
-| CRUD kategori | ✅ | ❌ | ❌ |
-| Dashboard & laporan | ✅ | ✅ | ❌ (diarahkan ke katalog) |
-| Profil & ganti password | ✅ | ✅ | ✅ |
+| Katalog buku | Ya | Ya | Ya |
+| Ajukan pinjam mandiri | — | — | Ya |
+| Pinjaman Saya (batalkan pengajuan) | — | — | Ya |
+| Persetujuan & pengembalian sirkulasi | Ya | Ya | Tidak |
+| CRUD buku & anggota | Ya | Ya | Tidak |
+| CRUD kategori | Ya | Tidak | Tidak |
+| Dashboard & laporan | Ya | Ya | Tidak (diarahkan ke katalog) |
+| Profil & ganti password | Ya | Ya | Ya |
 
 Otorisasi dijaga dua lapis: middleware `role` pada route dan guard di komponen Livewire.
 
@@ -174,6 +187,10 @@ app/Services/LibraryStatsService.php
 app/Services/LoanReportService.php
 app/Http/Middleware/          EnsureRole, EnsureApiKey, CheckAdminRole
 database/seeders/             Seeder idempoten (akun anggota otomatis)
+resources/css/app.css         Token Editorial Kampus & gaya komponen
+resources/views/components/   Primitif UI, brand, dan sampul buku tipografis
+resources/views/partials/shell/  Shell publik dan staf
+resources/views/errors/       Komposisi 403/404/419/500
 docs/DESIGN_DOC.md            Dokumen perancangan & decision log
 DEMO.md                       Skenario demo UAS
 ```

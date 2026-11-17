@@ -12,6 +12,13 @@ export default defineConfig({
                 bunny('Instrument Sans', {
                     weights: [400, 500, 600],
                 }),
+                bunny('Newsreader', {
+                    weights: [400, 500, 600],
+                    styles: ['normal', 'italic'],
+                }),
+                bunny('IBM Plex Mono', {
+                    weights: [400, 500, 600],
+                }),
             ],
         }),
         tailwindcss(),

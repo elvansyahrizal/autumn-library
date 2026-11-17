@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Loan;
 use App\Services\LibraryStatsService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -32,6 +33,11 @@ class DashboardController extends Controller
         // Fallback lokal: hasilnya sama dengan payload GET /api/stats.
         $stats = array_merge($statsService->summary(), is_array($stats) ? $stats : []);
 
-        return view('dashboard', compact('stats'));
+        $latestLoans = Loan::with(['member', 'loanItems.book'])
+            ->latest('id')
+            ->limit(6)
+            ->get();
+
+        return view('dashboard', compact('stats', 'latestLoans'));
     }
 }

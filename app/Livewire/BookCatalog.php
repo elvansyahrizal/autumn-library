@@ -127,6 +127,13 @@ class BookCatalog extends Component
         $this->errorMessage = '';
     }
 
+    public function resetFilters(): void
+    {
+        $this->search = '';
+        $this->selectedCategory = '';
+        $this->resetPage();
+    }
+
     public function render()
     {
         $categories = Category::orderBy('nama_kategori')->get();

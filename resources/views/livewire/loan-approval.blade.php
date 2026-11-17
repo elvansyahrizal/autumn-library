@@ -1,190 +1,230 @@
 <div class="space-y-6">
-    <!-- Header -->
-    <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Persetujuan & Pengembalian Sirkulasi</h1>
-            <p class="text-sm text-gray-500 mt-1">
-                Kelola pengajuan peminjaman mandiri dari mahasiswa dan proses pengembalian buku.
-            </p>
-        </div>
-        <div class="flex gap-2">
-            <a href="{{ route('loans.create') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition">
-                Input Transaksi Manual
-            </a>
-            <a href="{{ route('loans.report') }}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition shadow-sm">
-                Laporan Peminjaman
-            </a>
-        </div>
-    </div>
+    <x-ui.page-header
+        eyebrow="Meja sirkulasi"
+        title="Persetujuan & Sirkulasi"
+        description="Verifikasi pengajuan peminjaman mandiri, serahkan buku fisik, dan proses pengembalian dari satu meja kerja."
+    >
+        <x-slot:actions>
+            <x-ui.button :href="route('loans.report')" variant="secondary">
+                <x-ui.icon name="file-text" :size="15" />
+                Laporan
+            </x-ui.button>
+            <x-ui.button :href="route('loans.create')">
+                <x-ui.icon name="plus" :size="15" />
+                Input transaksi
+            </x-ui.button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
-    <!-- Alert Notifikasi -->
     @if ($successMessage)
-        <div class="bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-lg flex items-center justify-between">
-            <span class="text-sm font-medium">✅ {{ $successMessage }}</span>
-            <button wire:click="resetMessages" class="font-bold text-emerald-600">&times;</button>
-        </div>
+        <x-ui.alert tone="success" :message="$successMessage" dismiss="resetMessages" />
     @endif
 
     @if ($errorMessage)
-        <div class="bg-rose-50 border border-rose-300 text-rose-800 px-4 py-3 rounded-lg flex items-center justify-between">
-            <span class="text-sm font-medium">⚠️ {{ $errorMessage }}</span>
-            <button wire:click="resetMessages" class="font-bold text-rose-600">&times;</button>
-        </div>
+        <x-ui.alert tone="error" :message="$errorMessage" dismiss="resetMessages" />
     @endif
 
-    <!-- Tab Filter Status & Pencarian -->
-    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="flex flex-wrap gap-2">
-                <button wire:click="$set('filterStatus', 'diajukan')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ $filterStatus === 'diajukan' ? 'bg-amber-500 text-white shadow' : 'bg-amber-50 text-amber-700 hover:bg-amber-100' }}">
-                    <span>⏳ Diajukan</span>
-                    <span class="bg-white text-amber-800 px-1.5 py-0.2 rounded-full text-[10px]">{{ $counts['diajukan'] }}</span>
+    <section class="grid grid-cols-3 divide-x divide-line border-y border-line">
+        <button type="button" wire:click="$set('filterStatus', 'diajukan')" class="group px-3 py-5 text-left transition hover:bg-card sm:px-5">
+            <x-ui.stat :value="$counts['diajukan']" label="Menunggu" hint="Perlu diverifikasi" tone="brass" />
+        </button>
+
+        <button type="button" wire:click="$set('filterStatus', 'dipinjam')" class="group px-3 py-5 text-left transition hover:bg-card sm:px-5">
+            <x-ui.stat :value="$counts['dipinjam']" label="Dipinjam" hint="Sedang beredar" />
+        </button>
+
+        <button type="button" wire:click="$set('filterStatus', 'dikembalikan')" class="group px-3 py-5 text-left transition hover:bg-card sm:px-5">
+            <x-ui.stat :value="$counts['dikembalikan']" label="Selesai" hint="Sudah kembali" tone="success" />
+        </button>
+    </section>
+
+    <section class="space-y-4">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-wrap gap-x-6 border-b border-line">
+                <button
+                    type="button"
+                    wire:click="$set('filterStatus', 'diajukan')"
+                    class="tab-link"
+                    aria-pressed="{{ $filterStatus === 'diajukan' ? 'true' : 'false' }}"
+                >
+                    Diajukan
+                    <span class="tab-count">{{ $counts['diajukan'] }}</span>
                 </button>
-                <button wire:click="$set('filterStatus', 'dipinjam')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ $filterStatus === 'dipinjam' ? 'bg-blue-600 text-white shadow' : 'bg-blue-50 text-blue-700 hover:bg-blue-100' }}">
-                    <span>📖 Sedang Dipinjam</span>
-                    <span class="bg-white text-blue-800 px-1.5 py-0.2 rounded-full text-[10px]">{{ $counts['dipinjam'] }}</span>
+
+                <button
+                    type="button"
+                    wire:click="$set('filterStatus', 'dipinjam')"
+                    class="tab-link"
+                    aria-pressed="{{ $filterStatus === 'dipinjam' ? 'true' : 'false' }}"
+                >
+                    Dipinjam
+                    <span class="tab-count">{{ $counts['dipinjam'] }}</span>
                 </button>
-                <button wire:click="$set('filterStatus', 'dikembalikan')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {{ $filterStatus === 'dikembalikan' ? 'bg-emerald-600 text-white shadow' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
-                    <span>✅ Selesai Dikembalikan</span>
-                    <span class="bg-white text-emerald-800 px-1.5 py-0.2 rounded-full text-[10px]">{{ $counts['dikembalikan'] }}</span>
+
+                <button
+                    type="button"
+                    wire:click="$set('filterStatus', 'dikembalikan')"
+                    class="tab-link"
+                    aria-pressed="{{ $filterStatus === 'dikembalikan' ? 'true' : 'false' }}"
+                >
+                    Selesai
+                    <span class="tab-count">{{ $counts['dikembalikan'] }}</span>
                 </button>
-                <button wire:click="$set('filterStatus', '')" class="px-4 py-2 rounded-lg text-xs font-bold transition {{ $filterStatus === '' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+
+                <button
+                    type="button"
+                    wire:click="$set('filterStatus', '')"
+                    class="tab-link"
+                    aria-pressed="{{ $filterStatus === '' ? 'true' : 'false' }}"
+                >
                     Semua
                 </button>
             </div>
 
-            <div class="w-full sm:w-64">
-                <input 
-                    type="text" 
-                    wire:model.live.debounce.300ms="search" 
-                    placeholder="Cari nama anggota / NIM..." 
-                    class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            <div class="relative w-full lg:w-72">
+                <label for="approval-search" class="sr-only">Cari nama anggota atau NIM</label>
+                <x-ui.icon name="search" :size="16" class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
+                <input
+                    id="approval-search"
+                    type="search"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="Cari nama atau NIM..."
+                    class="form-control h-10 pl-10 text-[12.5px]"
                 >
             </div>
         </div>
-    </div>
 
-    <!-- Tabel Data Peminjaman -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-gray-600">
-                <thead class="bg-gray-50 border-b border-gray-200 text-xs font-semibold uppercase text-gray-500">
-                    <tr>
-                        <th class="px-4 py-3">Nota</th>
-                        <th class="px-4 py-3">Anggota (Peminjam)</th>
-                        <th class="px-4 py-3">Judul Buku</th>
-                        <th class="px-4 py-3">Tgl Pinjam / Batas</th>
-                        <th class="px-4 py-3">Status</th>
-                        <th class="px-4 py-3">Denda</th>
-                        <th class="px-4 py-3 text-right">Aksi Petugas</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse ($loans as $loan)
-                        @php
-                            $estimatedFine = $loan->isApproved() ? $loan->estimatedFine() : 0;
-                            $isLate = $estimatedFine > 0;
-                        @endphp
-                        <tr wire:key="approval-{{ $loan->id }}" class="hover:bg-gray-50/80 transition">
-                            <td class="px-4 py-3 font-mono font-bold text-xs text-blue-900">
-                                #{{ str_pad($loan->id, 5, '0', STR_PAD_LEFT) }}
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="font-semibold text-gray-900">{{ $loan->member->nama ?? 'Anggota Terhapus' }}</div>
-                                <div class="text-xs text-gray-400">NIM: {{ $loan->member->nim ?? '-' }}</div>
-                            </td>
-                            <td class="px-4 py-3">
-                                @foreach ($loan->loanItems as $item)
-                                    <div class="font-medium text-gray-800 text-xs truncate max-w-xs" title="{{ $item->book->judul ?? '' }}">
-                                        📘 {{ $item->book->judul ?? 'Buku Terhapus' }}
-                                    </div>
-                                @endforeach
-                            </td>
-                            <td class="px-4 py-3 text-xs">
-                                <div>{{ $loan->tanggal_pinjam->format('d/m/Y') }}</div>
-                                <div class="{{ $isLate ? 'text-rose-600 font-bold' : 'text-gray-400' }}">
-                                    s/d {{ $loan->tanggal_kembali->format('d/m/Y') }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 text-xs">
-                                @if ($loan->status === 'diajukan')
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                                        Diajukan
-                                    </span>
-                                @elseif ($loan->status === 'dipinjam')
-                                    @if ($isLate)
-                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
-                                            Terlambat
-                                        </span>
-                                    @else
-                                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
-                                            Dipinjam
-                                        </span>
-                                    @endif
-                                @elseif ($loan->status === 'dikembalikan')
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                        Selesai
-                                    </span>
-                                @elseif ($loan->status === 'ditolak')
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-300">
-                                        Ditolak
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-xs font-semibold {{ ($loan->denda > 0 || $estimatedFine > 0) ? 'text-rose-600' : 'text-gray-400' }}">
-                                @if ($loan->status === 'dikembalikan')
-                                    Rp {{ number_format($loan->denda, 0, ',', '.') }}
-                                @elseif ($isLate)
-                                    Rp {{ number_format($estimatedFine, 0, ',', '.') }} (estimasi)
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    @if ($loan->status === 'diajukan')
-                                        <button 
-                                            wire:click="setujuiPeminjaman({{ $loan->id }})" 
-                                            class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold transition cursor-pointer shadow-sm"
-                                            title="Setujui dan serahkan buku ke mahasiswa"
-                                        >
-                                            ✓ Setujui
-                                        </button>
-                                        <button 
-                                            wire:click="tolakPeminjaman({{ $loan->id }})" 
-                                            wire:confirm="Yakin tolak pengajuan ini dan kembalikan stok buku?"
-                                            class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-xs font-semibold transition cursor-pointer"
-                                            title="Tolak pengajuan"
-                                        >
-                                            ✕ Tolak
-                                        </button>
-                                    @elseif ($loan->status === 'dipinjam')
-                                        <button 
-                                            wire:click="prosesPengembalian({{ $loan->id }})" 
-                                            wire:confirm="Konfirmasi buku sudah diterima kembali? Stok buku akan bertambah kembali."
-                                            class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition cursor-pointer shadow-sm"
-                                        >
-                                            ↩ Terima Kembali
-                                        </button>
-                                    @else
-                                        <span class="text-xs text-gray-300">-</span>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
+        <div class="overflow-hidden rounded-sm border border-line bg-card">
+            <div class="overflow-x-auto">
+                <table class="ed-table ed-table--slips">
+                    <thead>
                         <tr>
-                            <td colspan="7" class="py-10 text-center text-gray-400">
-                                Tidak ada data transaksi peminjaman.
-                            </td>
+                            <th>Nota</th>
+                            <th>Anggota</th>
+                            <th>Buku</th>
+                            <th>Tanggal</th>
+                            <th>Status</th>
+                            <th>Denda</th>
+                            <th class="text-right">Aksi petugas</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @forelse ($loans as $loan)
+                            @php
+                                $estimatedFine = $loan->isApproved() ? $loan->estimatedFine() : 0;
+                                $isLate = $estimatedFine > 0;
+                            @endphp
 
-        <div class="p-4 border-t border-gray-100">
-            {{ $loans->links() }}
+                            <tr wire:key="approval-{{ $loan->id }}">
+                                <td data-label="Nota">
+                                    <span class="num text-[11.5px] font-medium text-ink">#PINJAM-{{ str_pad($loan->id, 5, '0', STR_PAD_LEFT) }}</span>
+                                </td>
+
+                                <td data-label="Anggota">
+                                    <p class="cell-title">{{ $loan->member->nama ?? 'Anggota terhapus' }}</p>
+                                    <p class="cell-sub num">NIM {{ $loan->member->nim ?? '-' }}</p>
+                                </td>
+
+                                <td data-label="Buku">
+                                    <div class="space-y-1">
+                                        @foreach ($loan->loanItems as $item)
+                                            <p class="flex items-start gap-1.5 text-[12px] text-ink-soft">
+                                                <x-ui.icon name="book" :size="12" class="mt-0.5 text-muted" />
+                                                <span class="line-clamp-2">{{ $item->book?->judul ?? 'Buku terhapus' }}</span>
+                                            </p>
+                                        @endforeach
+                                    </div>
+                                </td>
+
+                                <td data-label="Tanggal">
+                                    <p class="num text-[11.5px] text-ink">{{ $loan->tanggal_pinjam->format('d/m/Y') }}</p>
+                                    <p @class(['num mt-0.5 text-[10.5px]', 'font-medium text-danger' => $isLate, 'text-muted' => ! $isLate])>
+                                        s/d {{ $loan->tanggal_kembali->format('d/m/Y') }}
+                                    </p>
+                                </td>
+
+                                <td data-label="Status">
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <x-ui.status-badge :status="$loan->status" />
+                                        @if ($isLate)
+                                            <x-ui.badge tone="danger">Terlambat</x-ui.badge>
+                                        @endif
+                                    </div>
+                                </td>
+
+                                <td data-label="Denda">
+                                    @if ($loan->status === 'dikembalikan')
+                                        <span class="num text-[11.5px] {{ $loan->denda > 0 ? 'font-medium text-danger' : 'text-muted' }}">
+                                            Rp {{ number_format($loan->denda, 0, ',', '.') }}
+                                        </span>
+                                    @elseif ($isLate)
+                                        <span class="num text-[11.5px] font-medium text-danger">
+                                            Rp {{ number_format($estimatedFine, 0, ',', '.') }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">&ndash;</span>
+                                    @endif
+                                </td>
+
+                                <td data-label="" class="cell-actions">
+                                    <div class="flex flex-wrap items-center justify-end gap-1.5">
+                                        @if ($loan->status === 'diajukan')
+                                            <x-ui.button
+                                                type="button"
+                                                size="sm"
+                                                wire:click="setujuiPeminjaman({{ $loan->id }})"
+                                                title="Setujui dan serahkan buku ke mahasiswa"
+                                            >
+                                                <x-ui.icon name="check" :size="13" />
+                                                Setujui
+                                            </x-ui.button>
+
+                                            <x-ui.button
+                                                type="button"
+                                                variant="danger"
+                                                size="sm"
+                                                wire:click="tolakPeminjaman({{ $loan->id }})"
+                                                wire:confirm="Yakin tolak pengajuan ini dan kembalikan stok buku?"
+                                                title="Tolak pengajuan"
+                                            >
+                                                Tolak
+                                            </x-ui.button>
+                                        @elseif ($loan->status === 'dipinjam')
+                                            <x-ui.button
+                                                type="button"
+                                                size="sm"
+                                                wire:click="prosesPengembalian({{ $loan->id }})"
+                                                wire:confirm="Konfirmasi buku sudah diterima kembali? Stok buku akan bertambah kembali."
+                                            >
+                                                <x-ui.icon name="refresh" :size="13" />
+                                                Terima kembali
+                                            </x-ui.button>
+                                        @else
+                                            <span class="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">&ndash;</span>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="!p-0">
+                                    <x-ui.empty-state
+                                        icon="refresh"
+                                        title="Tidak ada transaksi di tab ini"
+                                        description="Ubah filter status atau bersihkan pencarian untuk melihat transaksi lain."
+                                    />
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if ($loans->hasPages())
+                <div class="border-t border-line px-4 py-4">
+                    {{ $loans->links('vendor.pagination.livewire') }}
+                </div>
+            @endif
         </div>
-    </div>
+    </section>
 </div>
