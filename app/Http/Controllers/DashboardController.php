@@ -2,35 +2,35 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Api\StatsController as ApiStatsController;
+use App\Services\LibraryStatsService;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(LibraryStatsService $statsService)
     {
-        $stats = [
-            'total_buku' => 0,
-            'total_anggota' => 0,
-            'peminjaman_aktif' => 0,
-        ];
+        $stats = null;
 
         try {
             $apiUrl = config('services.internal_api.base_url');
+
             if ($apiUrl) {
-                $response = Http::timeout(1)->get($apiUrl.'/api/stats');
+                $response = Http::timeout((int) config('services.internal_api.timeout', 2))
+                    ->get($apiUrl.'/api/stats');
+
                 if ($response->successful()) {
                     $stats = $response->json();
-                } else {
-                    $stats = (new ApiStatsController)->index()->getData(true);
                 }
-            } else {
-                $stats = (new ApiStatsController)->index()->getData(true);
             }
-        } catch (\Exception $e) {
-            // Fallback langsung ke API controller internal / database agar dashboard selalu menyajikan data riil
-            $stats = (new ApiStatsController)->index()->getData(true);
+        } catch (\Throwable $e) {
+            Log::info('Dashboard memakai data lokal karena API internal tidak tersedia.', [
+                'message' => $e->getMessage(),
+            ]);
         }
+
+        // Fallback lokal: hasilnya sama dengan payload GET /api/stats.
+        $stats = array_merge($statsService->summary(), is_array($stats) ? $stats : []);
 
         return view('dashboard', compact('stats'));
     }

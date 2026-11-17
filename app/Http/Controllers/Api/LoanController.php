@@ -8,16 +8,17 @@ use App\Http\Resources\LoanResource;
 use App\Models\Loan;
 use App\Models\Member;
 use App\Models\User;
+use App\Services\LoanReportService;
 use App\Services\LoanService;
 use Illuminate\Http\Request;
 
 class LoanController extends Controller
 {
-    public function index()
+    public function index(Request $request, LoanReportService $report)
     {
-        $loans = Loan::with(['member', 'user', 'loanItems.book'])->paginate(10);
-
-        return LoanResource::collection($loans);
+        return LoanResource::collection(
+            $report->paginate((int) $request->query('page', 1))
+        );
     }
 
     public function store(Request $request, LoanService $loans)

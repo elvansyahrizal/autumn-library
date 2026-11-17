@@ -25,7 +25,7 @@
                 <tr>
                     <td>{{ $loan['id'] }}</td>
                     <td>{{ $loan['member']['nama'] }}</td>
-                    <td>{{ $loan['user']['name'] }}</td>
+                    <td>{{ $loan->approver?->name ?? $loan->user?->name ?? 'Mandiri' }}</td>
                     <td>
                         @foreach ($loan['loanItems'] as $item)
                             {{ $item['book']['judul'] }}@if (!$loop->last), @endif

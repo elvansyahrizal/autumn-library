@@ -6,9 +6,11 @@ use App\Exceptions\LoanRuleException;
 use App\Models\Book;
 use App\Models\Loan;
 use App\Models\Member;
+use App\Services\LoanReportService;
 use App\Services\LoanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class LoanController extends Controller
 {
@@ -19,12 +21,13 @@ class LoanController extends Controller
         return view('loans.index', compact('loans'));
     }
 
-    public function report(Request $request)
+    public function report(Request $request, LoanReportService $report)
     {
-        $body = ['data' => [], 'meta' => null];
+        $body = null;
 
         try {
             $apiUrl = config('services.internal_api.base_url');
+
             if ($apiUrl) {
                 $response = Http::timeout((int) config('services.internal_api.timeout', 2))->get($apiUrl.'/api/loans', [
                     'page' => $request->query('page', 1),
@@ -32,16 +35,16 @@ class LoanController extends Controller
 
                 if ($response->successful()) {
                     $body = $response->json();
-                } else {
-                    $body = (new Api\LoanController)->index()->response()->getData(true);
                 }
-            } else {
-                $body = (new Api\LoanController)->index()->response()->getData(true);
             }
-        } catch (\Exception $e) {
-            // Fallback memanggil controller API internal agar laporan selalu terisi data riil
-            $body = (new Api\LoanController)->index()->response()->getData(true);
+        } catch (\Throwable $e) {
+            Log::info('Laporan memakai data lokal karena API internal tidak tersedia.', [
+                'message' => $e->getMessage(),
+            ]);
         }
+
+        // Fallback lokal: hasilnya identik dengan payload GET /api/loans.
+        $body ??= $report->payload((int) $request->query('page', 1));
 
         return view('loans.report', [
             'loans' => $body['data'] ?? [],

@@ -85,7 +85,7 @@
                             $estimatedFine = $loan->isApproved() ? $loan->estimatedFine() : 0;
                             $isLate = $estimatedFine > 0;
                         @endphp
-                        <tr class="hover:bg-gray-50/80 transition">
+                        <tr wire:key="approval-{{ $loan->id }}" class="hover:bg-gray-50/80 transition">
                             <td class="px-4 py-3 font-mono font-bold text-xs text-blue-900">
                                 #{{ str_pad($loan->id, 5, '0', STR_PAD_LEFT) }}
                             </td>

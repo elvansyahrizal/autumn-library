@@ -38,12 +38,13 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php artisan migrate --force",
+            "@php artisan db:seed --force",
             "npm install --ignore-scripts",
             "npm run build"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "@php artisan dev"
+            "npx concurrently -k -n web,api,vite \"php artisan serve --port=8000\" \"php artisan serve --port=8011\" \"npm run dev\""
         ],
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",

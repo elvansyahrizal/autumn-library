@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="space-y-6" wire:keydown.escape.window="closeModal">
     <!-- Header Banner -->
     <div class="bg-gradient-to-r from-blue-900 to-indigo-800 text-white rounded-xl p-6 shadow-md">
         <h1 class="text-2xl font-bold">Katalog Buku Mandiri</h1>
@@ -54,7 +54,7 @@
     <!-- Grid Kartu Buku -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         @forelse ($books as $book)
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition">
+            <div wire:key="book-{{ $book->id }}" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition">
                 <div>
                     <!-- Sampul Buku Dummy / Placeholder -->
                     <div class="h-44 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 relative">
@@ -122,14 +122,14 @@
 
     <!-- Modal Konfirmasi Peminjaman (Alpine.js) -->
     @if ($showModal && $selectedBook)
-        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style="background-color: rgba(0, 0, 0, 0.5);" role="dialog" aria-modal="true" aria-labelledby="borrow-modal-title">
             <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-gray-100 animate-in fade-in zoom-in-95">
                 <div class="flex items-start justify-between border-b pb-3">
                     <div>
-                        <h3 class="text-lg font-bold text-gray-900">Konfirmasi Peminjaman</h3>
+                        <h3 id="borrow-modal-title" class="text-lg font-bold text-gray-900">Konfirmasi Peminjaman</h3>
                         <p class="text-xs text-gray-500">Pastikan detail buku sudah benar</p>
                     </div>
-                    <button wire:click="closeModal" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+                    <button wire:click="closeModal" aria-label="Tutup dialog" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
                 </div>
 
                 <div class="bg-blue-50/70 p-4 rounded-xl border border-blue-100 space-y-2">
@@ -165,7 +165,7 @@
                     <button wire:click="closeModal" class="flex-1 py-2 px-4 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-semibold transition cursor-pointer">
                         Batal
                     </button>
-                    <button wire:click="confirmBorrow" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition cursor-pointer shadow-sm">
+                    <button wire:click="confirmBorrow" wire:loading.attr="disabled" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition cursor-pointer shadow-sm disabled:opacity-60">
                         Ajukan Pinjam
                     </button>
                 </div>

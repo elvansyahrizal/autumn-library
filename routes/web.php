@@ -26,7 +26,7 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('catalog.index');
         }
 
-        return app(DashboardController::class)->index();
+        return app()->call([app(DashboardController::class), 'index']);
     })->name('dashboard');
 
     // Profil & Ganti Password

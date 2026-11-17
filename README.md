@@ -1,86 +1,188 @@
 # Sistem Perpustakaan Digital Kampus
 
-Aplikasi manajemen perpustakaan berbasis web menggunakan Laravel 12 dengan arsitektur MVC, REST API internal, dan Blade templating.
+Aplikasi manajemen perpustakaan berbasis **Laravel 12 + Livewire 3 + Tailwind CSS (Vite)** dengan REST API internal. Mencakup alur peminjaman mandiri mahasiswa, persetujuan petugas, pengembalian buku, denda keterlambatan, serta laporan yang dikonsumsi dari API.
 
 ---
 
 ## Prasyarat
 
-- PHP >= 8.2
+- PHP >= 8.3
 - Composer
-- MySQL / MariaDB
+- Node.js 20+ dan npm
+- SQLite (default) atau MySQL/MariaDB (opsional)
 
 ---
 
-## Panduan Instalasi & Konfigurasi
+## Instalasi
 
-### 1. Clone Repository & Install Dependensi
 ```bash
-git clone <repository-url>
-cd app-perpustakaan
 composer install
-```
-
-### 2. Konfigurasi Environment (`.env`)
-Salin file `.env.example` atau buat `.env` baru:
-```bash
-cp .env.example .env
+cp .env.example .env        # Windows: copy .env.example .env
 php artisan key:generate
+php artisan migrate --seed
+npm install
+npm run build
 ```
 
-Pastikan variabel-variabel berikut diatur di dalam file `.env`:
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=db_perpustakaan
-DB_USERNAME=root
-DB_PASSWORD=
+Atau jalankan setup otomatis:
 
-APP_FAKER_LOCALE=id_ID
-
-# Base URL instance kedua php artisan serve khusus panggilan API internal
-# (Http::get() dari DashboardController dan LoanController@report ke /api/...)
-INTERNAL_API_URL=http://127.0.0.1:8011
-```
-
-### 3. Migrasi Database & Seeding
-Jalankan migrasi dan isi database dengan data dummy awal (users, categories, books, members, loans):
 ```bash
-php artisan migrate:fresh --seed
+composer setup
 ```
 
-Data pengguna awal dari seeder:
-- **Admin**: `admin@pens.ac.id` | Password: `password` (Nama: Bambang Sutrisno)
-- **Petugas 1**: `petugas1@pens.ac.id` | Password: `password` (Nama: Siti Rahmawati)
-- **Petugas 2**: `petugas2@pens.ac.id` | Password: `password` (Nama: Ahmad Fauzi)
+Konfigurasi penting di `.env`:
+
+```env
+APP_URL=http://localhost:8000
+
+# Proteksi endpoint API yang bersifat menulis (header X-API-Key)
+API_KEY=perpustakaan-demo-key
+
+# Instance kedua `php artisan serve` untuk konsumsi API internal
+INTERNAL_API_URL=http://127.0.0.1:8011
+INTERNAL_API_TIMEOUT=2
+```
+
+Database default memakai SQLite (`database/database.sqlite`). Untuk MySQL, ubah `DB_CONNECTION=mysql` beserta kredensialnya, lalu jalankan ulang migrasi.
 
 ---
 
-## Menjalankan Aplikasi (Dual Server)
+## Menjalankan Aplikasi
 
-Karena `php artisan serve` (PHP built-in server) bersifat *single-threaded* dan menangani satu request dalam satu waktu, pemanggilan API internal dari Controller (`DashboardController` dan `LoanController@report`) ke endpoint `/api/...` memerlukan **dua server berjalan bersamaan di port berbeda** untuk mencegah terjadinya *deadlock*:
+### Opsi A — Dua server (sesuai skenario demo)
 
-### Terminal 1 - Server Utama (Web & Browser)
 ```bash
+# Terminal 1: server web
 php artisan serve --port=8000
-```
-Akses aplikasi melalui browser: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
-### Terminal 2 - Server API Internal
-```bash
+# Terminal 2: server API internal
 php artisan serve --port=8011
 ```
-Server ini khusus melayani request internal dari aplikasi sendiri melalui Laravel HTTP Client (`Http::get()`).
+
+Buka `http://127.0.0.1:8000`.
+
+Dua server diperlukan karena PHP built-in server bersifat single-threaded: dashboard dan laporan memanggil `/api/*` lewat HTTP. Bila server 8011 mati, aplikasi otomatis memakai data lokal (fallback), jadi halaman tetap terbuka.
+
+### Opsi B — Satu perintah
+
+```bash
+composer dev
+```
+
+Perintah ini menjalankan server `:8000`, server `:8011`, dan Vite secara bersamaan. Untuk demo tanpa Vite, gunakan aset hasil `npm run build` seperti pada Opsi A.
 
 ---
 
-## Fitur Utama
+## Akun Demo
 
-1. **Autentikasi & Otorisasi**: Role Admin & Petugas dengan middleware proteksi.
-2. **Dashboard**: Ringkasan statistik (total buku, anggota, peminjaman aktif) dikonsumsi dari `GET /api/stats`.
-3. **CRUD Buku, Kategori & Anggota**: Dilengkapi form request validation dan pencarian.
-4. **Peminjaman & Pengembalian**: Mendukung multiple buku dalam satu transaksi dan pelacakan status.
-5. **Laporan Peminjaman**: Ditampilkan via Blade dari konsumsi `GET /api/loans`.
-6. **REST API**: 11 endpoint publik dengan format API Resource (`/api/books`, `/api/members`, `/api/loans`, `/api/stats`).
-7. **Kustom Pagination**: Tampilan teks/link rapi tanpa ketergantungan library Tailwind.
+| Peran | Email | Password |
+|---|---|---|
+| Admin | `admin@pens.ac.id` | `password` |
+| Petugas | `petugas1@pens.ac.id` | `password` |
+| Petugas | `petugas2@pens.ac.id` | `password` |
+| Mahasiswa | `mahasiswa@pens.ac.id` | `3123500001` (NIM) |
+
+Anggota lain yang dibuat seeder juga memiliki akun login dengan **password awal = NIM**. Petugas dapat mendaftarkan anggota baru dan akun login dibuat otomatis.
+
+---
+
+## Matriks Hak Akses
+
+| Halaman / Aksi | Admin | Petugas | Anggota |
+|---|---|---|---|
+| Katalog buku | ✅ | ✅ | ✅ |
+| Ajukan pinjam mandiri | — | — | ✅ |
+| Pinjaman Saya (batalkan pengajuan) | — | — | ✅ |
+| Persetujuan & pengembalian sirkulasi | ✅ | ✅ | ❌ |
+| CRUD buku & anggota | ✅ | ✅ | ❌ |
+| CRUD kategori | ✅ | ❌ | ❌ |
+| Dashboard & laporan | ✅ | ✅ | ❌ (diarahkan ke katalog) |
+| Profil & ganti password | ✅ | ✅ | ✅ |
+
+Otorisasi dijaga dua lapis: middleware `role` pada route dan guard di komponen Livewire.
+
+---
+
+## Siklus Transaksi
+
+```
+Katalog → Diajukan (stok −1) → Dipinjam → Dikembalikan (stok +1, denda dihitung)
+                             ↘ Ditolak / Dibatalkan (stok +1)
+```
+
+Transaksi manual oleh petugas langsung dibuat berstatus **Dipinjam** dan tetap memotong stok.
+
+### Aturan bisnis
+
+1. Maksimal **3 buku aktif** per anggota (gabungan `diajukan` dan `dipinjam`).
+2. Buku yang sama tidak bisa diajukan dua kali sebelum pinjaman sebelumnya selesai.
+3. Stok dipotong saat pengajuan dan dipulihkan saat ditolak, dibatalkan, atau dikembalikan.
+4. Denda: `max(0, hari terlambat) × Rp 5.000`, dihitung saat pengembalian.
+5. Status yang sah hanya `diajukan`, `dipinjam`, `dikembalikan`, `ditolak`. Status warisan `terlambat` dimigrasikan otomatis.
+6. Buku, kategori, dan anggota yang sudah punya riwayat peminjaman **tidak bisa dihapus** (pesan error ramah).
+7. Transaksi yang masih aktif tidak bisa dihapus.
+
+Seluruh logika transisi berada di `app/Services/LoanService.php` sehingga jalur Livewire, controller web, dan API memakai aturan yang sama.
+
+---
+
+## REST API
+
+Base URL: `http://127.0.0.1:8000/api`
+
+| Method | Endpoint | Akses |
+|---|---|---|
+| GET | `/books`, `/books/{id}` | Publik |
+| GET | `/members`, `/members/{id}` | Publik |
+| GET | `/loans` | Publik |
+| GET | `/stats` | Publik |
+| POST | `/books` | Wajib `X-API-Key` |
+| PUT | `/books/{id}` | Wajib `X-API-Key` |
+| DELETE | `/books/{id}` | Wajib `X-API-Key` |
+| POST | `/loans` | Wajib `X-API-Key` |
+| PUT | `/loans/{id}/kembalikan` | Wajib `X-API-Key` |
+
+Contoh:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/books \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: perpustakaan-demo-key" \
+  -d '{"judul":"Buku API","penulis":"Penulis","penerbit":"Penerbit","tahun_terbit":2026,"stok":3,"category_id":1}'
+```
+
+Tanpa header atau dengan key salah, endpoint tulis mengembalikan `401 Unauthorized`.
+
+---
+
+## Pengujian
+
+```bash
+php artisan test
+```
+
+Cakupan test: akses halaman per role, proteksi API key, pengajuan mandiri, kuota 3 buku, anti-duplikasi, persetujuan, penolakan, pembatalan, pengembalian tepat waktu/telat, transaksi manual, serta guard hapus data.
+
+---
+
+## Struktur Penting
+
+```text
+app/Livewire/                 BookCatalog, MyLoans, LoanApproval
+app/Services/LoanService.php  Satu-satunya tempat transisi sirkulasi & denda
+app/Services/LibraryStatsService.php
+app/Services/LoanReportService.php
+app/Http/Middleware/          EnsureRole, EnsureApiKey, CheckAdminRole
+database/seeders/             Seeder idempoten (akun anggota otomatis)
+docs/DESIGN_DOC.md            Dokumen perancangan & decision log
+DEMO.md                       Skenario demo UAS
+```
+
+---
+
+## Troubleshooting
+
+- **Halaman 500 setelah mengubah tampilan** — jalankan `npm run build` dan pastikan `public/build/manifest.json` ada.
+- **Dashboard/laporan kosong** — pastikan server `:8011` hidup, atau biarkan fallback lokal bekerja (data tetap tampil).
+- **API tulis 401** — kirim header `X-API-Key` sesuai `API_KEY` di `.env`.
+- **Perubahan `.env` tidak terbaca** — jalankan `php artisan config:clear`.

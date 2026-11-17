@@ -55,7 +55,7 @@
                 $estimatedFine = $loan->isApproved() ? $loan->estimatedFine() : 0;
                 $isLate = $estimatedFine > 0;
             @endphp
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 hover:border-blue-200 transition">
+            <div wire:key="loan-{{ $loan->id }}" class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 space-y-4 hover:border-blue-200 transition">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
                     <div class="flex items-center gap-3">
                         <span class="text-sm font-bold text-gray-700">Kode Nota #PINJAM-{{ str_pad($loan->id, 5, '0', STR_PAD_LEFT) }}</span>
